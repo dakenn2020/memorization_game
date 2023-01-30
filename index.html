@@ -10,21 +10,17 @@
       overflow-y: scroll;
       max-width: 480px;
       margin: 0 auto;
-
     }
 
     table {
       width: 100%;
     }
-
-    #show {
+    #showWord {
       font-size: large;
     }
-
     .hidden {
       display: none;
     }
-
     td {
       text-align: center;
     }
@@ -32,16 +28,15 @@
 
 </head>
 <body>
-  <p>オフラインでも利用できます</p>
+  <p></p>
   <button id="start" onclick="window.location.reload()">リセット</button>
   <h1>ワード記憶ゲーム</h1>
 
   <p><span id="showOfNumber"></span> 個のワードが表示されるので記憶し順番に答えましょう。</p>
   <p>ワードは<span id="seconds"></span> 秒ごとに切り替わります。</p>
   <div id="content">
-    <div id="show">
-      <span id="number"></span>
-      <span id="word">ここに表示されます</span>
+    <div id="showWord">
+      ここに表示されます。
     </div>
     <div id="fild" class="hidden">
       <div id="form">
@@ -102,12 +97,11 @@
     class Random {
       static word = TEXT;
       static shuffle() {
-        for (const index in this.word) {
+        for (let i = 0; i < DISPLAY_SHOW_NUMBER; i ++) {
           const random = Math.floor(Math.random() * this.word.length);
-          const swap = this.word[index];
-          this.word[index] = this.word[random];
+          const swap = this.word[i];
+          this.word[i] = this.word[random];
           this.word[random] = swap;
-          if (index >= DISPLAY_SHOW_NUMBER - 1) break;
         }
       }
     }
@@ -115,49 +109,45 @@
     class Game {
       // n秒ごとに見せる
       display() {
-        const show = document.getElementById("show");
-        const number = document.getElementById("number");
-        const word = document.getElementById("word");
         let count = 0;
         let countDownSpeed = COUNT_SPEED;
 
         let countDown = setInterval(() => {
-          number.textContent = count + 1 + ".";
-          word.textContent = Random.word[count];
+          let showWord =  count + 1 + ":  " + Random.word[count];
           count++;
-          //終了条件
           if (count > DISPLAY_SHOW_NUMBER) {
             clearInterval(countDown);
             document.getElementById("fild").classList.remove("hidden");
-            show.innerText = "";
+            showWord= "回答してください。";
           }
+          document.getElementById("showWord").textContent = showWord;
         }, countDownSpeed * 1000);
 
       }
 
       showAnswer() {
         const inputAnswer = document.getElementById("inputAnswer");
-        const answerField = document.getElementById("answerTable");
-        const answerNumberinput = document.getElementById("answerNumber");
-        const answerThisNumber = Number(answerNumberinput.textContent);
-        const row = document.createElement("tr");
+        const numberOfAnswer = document.getElementById("answerNumber");
+        const answerThisNumber = Number(numberOfAnswer.textContent);
+
         const cellText = [
           answerThisNumber,
           Random.word[answerThisNumber - 1],
           inputAnswer.value,
           Random.word[answerThisNumber - 1] == inputAnswer.value ? "〇" : "×"
-        ]
+        ];
+        const row = document.createElement("tr");
         for (const c of cellText) {
           const cell = document.createElement("td");
-          cell.appendChild(document.createTextNode(c));
+          cell.textContent = c;
           row.appendChild(cell);
         }
-        answerField.appendChild(row);
-        answerNumberinput.textContent = answerThisNumber + 1;
-        inputAnswer.value = "";
+        document.getElementById("answerTable").appendChild(row);
+
         if (answerThisNumber >= DISPLAY_SHOW_NUMBER) document.getElementById("form").textContent = '';
+        numberOfAnswer.textContent = answerThisNumber + 1;
+        inputAnswer.value = "";
       }
     }
+    
   </script>
-</body>
-</html>
