@@ -2,81 +2,73 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ワード暗記ゲーム</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ワード記憶ゲーム</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-    }
-
     body {
-      text-align: center;
       word-break: break-all;
       overflow-y: scroll;
-      width: 50%;
-      max-width: 800px;
-      min-width: 480px;
+      max-width: 480px;
       margin: 0 auto;
+
     }
 
     table {
-      margin: auto;
+      width: 100%;
     }
 
     #show {
       font-size: large;
     }
 
-    .active {
+    .hidden {
       display: none;
     }
 
     td {
-      padding: 10px;
+      text-align: center;
     }
   </style>
-  <script>
-    const reset = () => window.location.reload();
-  </script>
+
 </head>
 <body>
-  <button onclick="reset()">リセット</button>
+  <p>オフラインでも利用できます</p>
+  <button id="start" onclick="window.location.reload()">リセット</button>
   <h1>ワード記憶ゲーム</h1>
 
   <p><span id="showOfNumber"></span> 個のワードが表示されるので記憶し順番に答えましょう。</p>
   <p>ワードは<span id="seconds"></span> 秒ごとに切り替わります。</p>
-  <div id="show">
-    <span id="number"></span>
-    <span id="word">ここに表示されます</span>
-
-  </div>
-  <div id="form" class="active">
-    <form action=""></form>
-    <label for="guessField"><span id="answerNumber">1</span> 番目の回答 </label>
-    <input type="text" min="1" max="100" required id="inputAnswer" autocomplete="off">
-    <input type="submit" value="回答" id="answerButton">
-  </div>
-
-  <div id="table" class="active">
-    <table border="1">
-      <thead>
-        <tr>
-          <th>順番</th>
-          <th>正解</th>
-          <th>回答</th>
-          <th>結果</th>
-        </tr>
-      </thead>
-      <tbody id="answerTable"></tbody>
-    </table>
-
+  <div id="content">
+    <div id="show">
+      <span id="number"></span>
+      <span id="word">ここに表示されます</span>
+    </div>
+    <div id="fild" class="hidden">
+      <div id="form">
+        <label for="guessField"><span id="answerNumber">1</span> 番目の回答 </label>
+        <input type="text" min="1" max="100" required id="inputAnswer" autocomplete="off">
+        <input type="submit" value="回答" id="answerButton">
+      </div>
+      <div id="table">
+        <table border="1">
+          <thead>
+            <tr>
+              <th>順番</th>
+              <th>正解</th>
+              <th>回答</th>
+              <th>結果</th>
+            </tr>
+          </thead>
+          <tbody id="answerTable"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <script>
-    const showOfNumber = 3;
-    document.getElementById("showOfNumber").innerText = showOfNumber;
-    const activeToggle = (id) => document.getElementById(id).classList.toggle("active");
-    let randomWord = [
+    const DISPLAY_SHOW_NUMBER = 3;
+    const COUNT_SPEED = 3;
+    const TEXT = [
       "january",
       "february",
       "march",
@@ -89,78 +81,83 @@
       "october",
       "november",
       "december",
-    ];
-    for (const index in randomWord) {
-      const random = Math.floor(Math.random() * randomWord.length);
-      const swap = randomWord[index];
-      randomWord[index] = randomWord[random];
-      randomWord[random] = swap;
-      if (index >= showOfNumber - 1) break;
-    }
-    //console.log(randomWord);
+    ]
 
-    {
-      let count = 0;
-      let countDownSpeed = 3;
-      // count = 10;
-      // countDownSpeed = 0;
-      document.getElementById("seconds").innerText = countDownSpeed;
-      const number = document.getElementById("number");
-      const word = document.getElementById("word");
-      const show = document.getElementById("show");
+    window.onload = () => {
+      document.getElementById("showOfNumber").textContent = DISPLAY_SHOW_NUMBER;
+      document.getElementById("seconds").textContent = COUNT_SPEED;
 
-      let countDown = setInterval(() => {
-        number.innerText = count + 1 + ".";
-        word.innerText = randomWord[count];
-        count++;
+      Random.shuffle();
+      let game = new Game();
+      game.display();
 
-        //終了条件
-        if (count > showOfNumber) {
-          clearInterval(countDown);
-          show.innerText = "";
-          activeToggle("form"); //出す
-          activeToggle("table");
+      document.getElementById("answerButton").addEventListener("click", () => {
+        game.showAnswer();
+      }, false);
+      document.getElementById("inputAnswer").addEventListener("keydown", (e) => {
+        if (e.keyCode == 13) game.showAnswer();
+      }, false);
+    };
+
+    class Random {
+      static word = TEXT;
+      static shuffle() {
+        for (const index in this.word) {
+          const random = Math.floor(Math.random() * this.word.length);
+          const swap = this.word[index];
+          this.word[index] = this.word[random];
+          this.word[random] = swap;
+          if (index >= DISPLAY_SHOW_NUMBER - 1) break;
         }
-
-      }, countDownSpeed * 1000);
-    }
-
-    let answerThisNumber = 0;
-    const answerNumberinput = document.getElementById("answerNumber");
-    const answerField = document.getElementById("answerTable");
-    const inputAnswer = document.getElementById("inputAnswer");
-
-    const createCell = (word) => {
-      cell = document.createElement("td");
-      cell.appendChild(document.createTextNode(word));
-      row.appendChild(cell);
-    }
-    const answer = () => {
-      answerNumberinput.innerText = answerThisNumber + 1;
-
-      row = document.createElement("tr");
-      createCell(answerThisNumber + 1);
-      createCell(randomWord[answerThisNumber]);
-      createCell(inputAnswer.value);
-      createCell(randomWord[answerThisNumber] == inputAnswer.value ? "〇" : "×");
-      answerField.appendChild(row);
-
-      inputAnswer.value = "";
-
-      answerThisNumber++;
-      if (answerThisNumber >= showOfNumber) {
-        activeToggle("form"); //消す
       }
     }
 
-    const answerButton = document.getElementById("answerButton");
-    answerButton.addEventListener("click", () => {
-      answer();
-    }, false);
+    class Game {
+      // n秒ごとに見せる
+      display() {
+        const show = document.getElementById("show");
+        const number = document.getElementById("number");
+        const word = document.getElementById("word");
+        let count = 0;
+        let countDownSpeed = COUNT_SPEED;
 
-    inputAnswer.addEventListener("keydown", (e) => {
-      if(e.keyCode == 13) answer();
-    },false);
+        let countDown = setInterval(() => {
+          number.textContent = count + 1 + ".";
+          word.textContent = Random.word[count];
+          count++;
+          //終了条件
+          if (count > DISPLAY_SHOW_NUMBER) {
+            clearInterval(countDown);
+            document.getElementById("fild").classList.remove("hidden");
+            show.innerText = "";
+          }
+        }, countDownSpeed * 1000);
+
+      }
+
+      showAnswer() {
+        const inputAnswer = document.getElementById("inputAnswer");
+        const answerField = document.getElementById("answerTable");
+        const answerNumberinput = document.getElementById("answerNumber");
+        const answerThisNumber = Number(answerNumberinput.textContent);
+        const row = document.createElement("tr");
+        const cellText = [
+          answerThisNumber,
+          Random.word[answerThisNumber - 1],
+          inputAnswer.value,
+          Random.word[answerThisNumber - 1] == inputAnswer.value ? "〇" : "×"
+        ]
+        for (const c of cellText) {
+          const cell = document.createElement("td");
+          cell.appendChild(document.createTextNode(c));
+          row.appendChild(cell);
+        }
+        answerField.appendChild(row);
+        answerNumberinput.textContent = answerThisNumber + 1;
+        inputAnswer.value = "";
+        if (answerThisNumber >= DISPLAY_SHOW_NUMBER) document.getElementById("form").textContent = '';
+      }
+    }
   </script>
 </body>
 </html>
